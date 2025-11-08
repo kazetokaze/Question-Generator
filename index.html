@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>問題と答えの分離表示（式の値使用）</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+    #problem, #answer { margin-top: 20px; padding: 10px; border: 1px solid #ccc; background: #f9f9f9; white-space: pre-wrap; }
+    button { padding: 8px 16px; font-size: 16px; margin-right: 10px; }
+  </style>
+</head>
+<body>
+  <h1>エネルギー変換の問題生成</h1>
+  <button onclick="generateProblem()">問題を生成</button>
+  <button onclick="showAnswer()">答えを表示</button>
+
+  <div id="problem"></div>
+  <div id="answer" style="display: none;"></div>
+
+  <script>
+    let currentData = null;
+
+    function getRandomA() {
+      return Math.floor(Math.random() * 90) + 10;
+    }
+
+    function getRandomB() {
+      return Math.floor(Math.random() * 11) + 10;
+    }
+
+    function getRandomC() {
+      const tenths = Math.floor(Math.random() * 50) + 1;
+      return (tenths / 10).toFixed(1);
+    }
+
+    function getRandomD() {
+      const steps = Math.floor(Math.random() * 20) + 1;
+      return (steps * 0.5).toFixed(1);
+    }
+
+    function getRandomE() {
+      return Math.floor(Math.random() * 60 + 1) * 10;
+    }
+
+    function isValid(value) {
+      const rounded = Math.round(value * 1000) / 1000;
+      return value <= 1 && Math.abs(value - rounded) < 1e-9;
+    }
+
+    function generateProblem() {
+      const problemDiv = document.getElementById("problem");
+      const answerDiv = document.getElementById("answer");
+      problemDiv.textContent = "探索中…";
+      answerDiv.style.display = "none";
+      answerDiv.textContent = "";
+      currentData = null;
+
+      let found = false;
+      let tries = 0;
+      const maxTries = 100000;
+
+      function tryOnce() {
+        if (found || tries >= maxTries) {
+          problemDiv.textContent = "条件を満たす組み合わせが見つかりませんでした。";
+          return;
+        }
+
+        const A = getRandomA();
+        const B = getRandomB();
+        const C = parseFloat(getRandomC());
+        const D = parseFloat(getRandomD());
+        const E = getRandomE();
+
+        const denominator = 10 * A * B;
+        if (denominator === 0) {
+          tries++;
+          return tryOnce();
+        }
+
+        const numerator = C * D * E;
+        const value = numerator / denominator;
+
+        if (isValid(value)) {
+          currentData = { A, B, C, D, E, value };
+          const sentence = `${A}kgのおもりを${B}mの高さから、発電機につなげて落下させた。\n` +
+            `この時、発電機に豆電球を接続し、流れた電流と電圧をそれぞれ測定したところ\n` +
+            `電流は${C.toFixed(1)}A、電圧は${D.toFixed(1)}Vで、流れた時間は${E}秒であった。\n` +
+            `この時、初めにおもりが持っていた位置エネルギーのうち、何％が電気エネルギーに変換されたか求めよ。`;
+
+          problemDiv.textContent = sentence;
+          found = true;
+        } else {
+          tries++;
+          setTimeout(tryOnce, 0);
+        }
+      }
+
+      tryOnce();
+    }
+
+    function showAnswer() {
+      const answerDiv = document.getElementById("answer");
+      if (!currentData) {
+        answerDiv.textContent = "先に問題を生成してください。";
+        answerDiv.style.display = "block";
+        return;
+      }
+
+      const efficiency = (currentData.value * 100).toFixed(1);
+      answerDiv.textContent = `答え：位置エネルギーのうち、${efficiency}%が電気エネルギーに変換された。`;
+      answerDiv.style.display = "block";
+    }
+  </script>
+</body>
+</html>
